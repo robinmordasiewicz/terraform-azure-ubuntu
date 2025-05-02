@@ -1,0 +1,29 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+
+write_files:
+  - path: /home/vscode/.devcontainer/devcontainer.json
+    owner: vscode:vscode
+    permissions: '0644'
+    content: |
+      {
+        "image": "ghcr.io/amerintlxperts/devcontainer:latest",
+        "initializeCommand": "docker pull ghcr.io/amerintlxperts/devcontainer:latest",
+        "runArgs": [
+          "--hostname=devcontainer"
+        ]
+      }
+
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+
+users:
+  - name: vscode
+    gecos: "VSCode User"
+    groups: [sudo, docker]
+    primary_group: vscode
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+    lock_passwd: false

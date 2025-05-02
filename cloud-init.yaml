@@ -1,0 +1,30 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+
+runcmd:
+  - |
+    # Create directory for devcontainer.json and write its content
+    mkdir -p /home/vscode/.devcontainer
+    cat <<'EOF' > /home/vscode/.devcontainer/devcontainer.json
+    {
+      "image": "ghcr.io/amerintlxperts/devcontainer:latest",
+      "initializeCommand": "docker pull ghcr.io/amerintlxperts/devcontainer:latest",
+      "runArgs": [
+        "--hostname=devcontainer"
+      ]
+    }
+    EOF
+  - chown -R vscode:vscode /home/vscode/.devcontainer
+  - chmod 0644 /home/vscode/.devcontainer/devcontainer.json
+  - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
+  - useradd -m -d /home/actions-runner -s /bin/bash actions-runner && usermod -G docker actions-runner && cd /home/actions-runner && curl -o actions-runner-linux-x64-2.323.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-linux-x64-2.323.0.tar.gz && tar xzf ./actions-runner-linux-x64-2.323.0.tar.gz && su - actions-runner -c "./config.sh --url https://github.com/amerintlxperts/devcontainers --token AG2O2OGY3TKAKEEEDC43XXLH7P62G" && ./svc.sh install && ./svc.sh start
+  - |
+    echo "Checking if reboot is required..."
+    if [ -f /var/run/reboot-required ]; then
+      echo "Reboot required. Initiating reboot..."
+      reboot
+    else
+      echo "No reboot required."
+    fi
