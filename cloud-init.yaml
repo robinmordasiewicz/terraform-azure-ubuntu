@@ -3,6 +3,19 @@
 package_update: true
 package_upgrade: true
 
+apt:
+  sources:
+      source1:
+          source: 'ppa:ubuntu-enterprise-desktop/authd'
+
+# deb and snap install
+packages:
+  - authd
+
+snap:
+ commands:
+   - ['install', 'authd-msentraid']
+
 runcmd:
   - |
     # Create directory for devcontainer.json and write its content
