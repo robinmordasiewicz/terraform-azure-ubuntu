@@ -102,6 +102,10 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
   size                  = "Standard_D4s_v3"
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   custom_data = filebase64("${path.module}/cloud-init.yaml")
 
   os_disk {

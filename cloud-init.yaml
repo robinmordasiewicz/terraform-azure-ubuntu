@@ -1,5 +1,11 @@
 #cloud-config
 
+# Application ID
+{% set CLIENT_ID = '3zs4x7w4m7xuk8xkgkycu934y9dvmqu785ca' %}
+
+# Tenant ID
+{% set ISSUER_ID = 'f4e2tqd8jg6h92qmxse1nmg535qjm84fbadr' %}
+
 package_update: true
 package_upgrade: true
 
@@ -17,6 +23,14 @@ snap:
    - ['install', 'authd-msentraid']
 
 runcmd:
+  - sed -i 's|<CLIENT_ID>|{{ CLIENT_ID }}|g; s|<ISSUER_ID>|{{ ISSUER_ID }}|g' /var/snap/authd-msentraid/current/broker.conf
+  - echo 'ssh_allowed_suffixes = @test.onmicrosoft.com' >> /var/snap/authd-msentraid/current/broker.conf
+  - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
+  - mkdir -p /etc/authd/brokers.d/
+  - cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/
+  - snap restart authd-msentraid
+  - systemctl restart authd
+  - systemctl restart ssh
   - |
     # Create directory for devcontainer.json and write its content
     mkdir -p /home/vscode/.devcontainer
