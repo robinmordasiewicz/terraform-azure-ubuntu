@@ -8,7 +8,6 @@ apt:
       source1:
           source: 'ppa:ubuntu-enterprise-desktop/authd'
 
-# deb and snap install
 packages:
   - authd
 
@@ -33,7 +32,6 @@ runcmd:
   - systemctl restart authd
   - systemctl restart ssh
   - |
-    # Create directory for devcontainer.json and write its content
     mkdir -p /etc/skel/.devcontainer
     cat <<'EOF' > /etc/skel/.devcontainer/devcontainer.json
     {
@@ -45,7 +43,6 @@ runcmd:
     }
     EOF
   - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
-  - useradd -m -d /home/actions-runner -s /bin/bash actions-runner && usermod -G docker actions-runner && cd /home/actions-runner && curl -o actions-runner-linux-x64-2.323.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-linux-x64-2.323.0.tar.gz && tar xzf ./actions-runner-linux-x64-2.323.0.tar.gz && su - actions-runner -c "./config.sh --url https://github.com/amerintlxperts/devcontainers --token AG2O2OGY3TKAKEEEDC43XXLH7P62G" && ./svc.sh install && ./svc.sh start
   - |
     echo "Checking if reboot is required..."
     if [ -f /var/run/reboot-required ]; then
