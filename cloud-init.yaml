@@ -1,10 +1,10 @@
 #cloud-config
 
 # Application ID
-{% set CLIENT_ID = '3zs4x7w4m7xuk8xkgkycu934y9dvmqu785ca' %}
+{% set CLIENT_ID = '9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2' %}
 
 # Tenant ID
-{% set ISSUER_ID = 'f4e2tqd8jg6h92qmxse1nmg535qjm84fbadr' %}
+{% set ISSUER_ID = '942b80cd-1b14-42a1-8dcf-4b21dece61ba' %}
 
 package_update: true
 package_upgrade: true
@@ -24,7 +24,7 @@ snap:
 
 runcmd:
   - sed -i 's|<CLIENT_ID>|{{ CLIENT_ID }}|g; s|<ISSUER_ID>|{{ ISSUER_ID }}|g' /var/snap/authd-msentraid/current/broker.conf
-  - echo 'ssh_allowed_suffixes = @test.onmicrosoft.com' >> /var/snap/authd-msentraid/current/broker.conf
+  - echo 'ssh_allowed_suffixes = @fortinet-us.com,@fortinet.com' >> /var/snap/authd-msentraid/current/broker.conf
   - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
   - mkdir -p /etc/authd/brokers.d/
   - cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/
