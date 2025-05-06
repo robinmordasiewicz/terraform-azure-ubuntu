@@ -1,11 +1,5 @@
 #cloud-config
 
-# Application ID
-{% set CLIENT_ID = '9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2' %}
-
-# Tenant ID
-{% set ISSUER_ID = '942b80cd-1b14-42a1-8dcf-4b21dece61ba' %}
-
 package_update: true
 package_upgrade: true
 
@@ -22,8 +16,15 @@ snap:
  commands:
    - ['install', 'authd-msentraid']
 
+write_files:
+  - path: /etc/ssh/sshd_config.d/authd.conf
+    content: |
+      UsePAM yes
+      KbdInteractiveAuthentication yes
+
 runcmd:
-  - sed -i 's|<CLIENT_ID>|{{ CLIENT_ID }}|g; s|<ISSUER_ID>|{{ ISSUER_ID }}|g' /var/snap/authd-msentraid/current/broker.conf
+  - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
+  - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com,@fortinet.com' >> /var/snap/authd-msentraid/current/broker.conf
   - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
   - mkdir -p /etc/authd/brokers.d/
@@ -33,8 +34,8 @@ runcmd:
   - systemctl restart ssh
   - |
     # Create directory for devcontainer.json and write its content
-    mkdir -p /home/vscode/.devcontainer
-    cat <<'EOF' > /home/vscode/.devcontainer/devcontainer.json
+    mkdir -p /etc/skel/.devcontainer
+    cat <<'EOF' > /etc/skel/.devcontainer/devcontainer.json
     {
       "image": "ghcr.io/amerintlxperts/devcontainer:latest",
       "initializeCommand": "docker pull ghcr.io/amerintlxperts/devcontainer:latest",
@@ -43,8 +44,6 @@ runcmd:
       ]
     }
     EOF
-  - chown -R vscode:vscode /home/vscode/.devcontainer
-  - chmod 0644 /home/vscode/.devcontainer/devcontainer.json
   - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
   - useradd -m -d /home/actions-runner -s /bin/bash actions-runner && usermod -G docker actions-runner && cd /home/actions-runner && curl -o actions-runner-linux-x64-2.323.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-linux-x64-2.323.0.tar.gz && tar xzf ./actions-runner-linux-x64-2.323.0.tar.gz && su - actions-runner -c "./config.sh --url https://github.com/amerintlxperts/devcontainers --token AG2O2OGY3TKAKEEEDC43XXLH7P62G" && ./svc.sh install && ./svc.sh start
   - |
