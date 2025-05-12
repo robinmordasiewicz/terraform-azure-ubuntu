@@ -43,7 +43,7 @@ runcmd:
     }
     EOF
   - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
-  - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
+  - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && echo 'CODER_HTTP_ADDRESS=0.0.0.0:80' > /etc/coder.d/coder.env && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
   - |
     echo "Checking if reboot is required..."
     if [ -f /var/run/reboot-required ]; then
