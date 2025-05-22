@@ -180,7 +180,6 @@ resource "azurerm_virtual_machine_data_disk_attachment" "home" {
   virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
   lun                       = 0
   caching                   = "ReadWrite"
-  write_accelerator_enabled = true
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
@@ -188,5 +187,4 @@ resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
   virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
   lun                       = 1
   caching                   = "ReadWrite"
-  write_accelerator_enabled = true
 }
