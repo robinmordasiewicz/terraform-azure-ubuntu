@@ -5,17 +5,40 @@ package_upgrade: true
 
 apt:
   sources:
-      source1:
-          source: 'ppa:ubuntu-enterprise-desktop/authd'
+    source1:
+      source: 'ppa:ubuntu-enterprise-desktop/authd'
+    source2:
+      source: 'ppa:ansible/ansible'
 
 packages:
   - authd
-  - nodejs
-  - npm
+  - ansible
+  - curl
+  - dpkg
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - ca-certificates
+  - bash-completion
+  - dos2unix
+  - dnsutils
+  - file
+  - fonts-powerline
+  - fzf
+  - mtr
+  - tcpdump
+  - nmap
+  - python3-full
+  - tofrodos
+  - software-properties-common
+  - ubuntu-drivers-common
+  - yamllint
+  - unzip
+  - zsh
 
 snap:
- commands:
-   - ['install', 'authd-msentraid']
+  commands:
+    - ['install', 'authd-msentraid']
 
 write_files:
   - path: /etc/ssh/sshd_config.d/authd.conf
@@ -24,15 +47,49 @@ write_files:
       KbdInteractiveAuthentication yes
 
 runcmd:
-  - mkfs.ext4 /dev/sdc || true
-  - mkfs.ext4 /dev/sdd || true
-  - mkdir -p /home
-  - mount /dev/sdc /home
+  - source /etc/os-release && curl -fsSL https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb \
+      -o /tmp/packages-microsoft-prod.deb
+  - dpkg -i /tmp/packages-microsoft-prod.deb
+  - rm /tmp/packages-microsoft-prod.deb
+  - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+    > /etc/apt/sources.list.d/hashicorp.list
+  - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | gpg --dearmor > /usr/share/keyrings/githubcli-archive-keyring.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list
+  - curl -sL https://packages.microsoft.com/keys/microsoft.asc \
+      | gpg --dearmor > /usr/share/keyrings/microsoft-archive-keyring.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
+      > /etc/apt/sources.list.d/azure-cli.list
+  - curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor > /usr/share/keyrings/google-cloud-archive-keyring.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/google-cloud-archive-keyring.gpg] http://packages.cloud.google.com/apt cloud-sdk main" \
+      > /etc/apt/sources.list.d/google-cloud-sdk.list
+  - curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub \
+      | gpg --dearmor > /usr/share/keyrings/google-chrome-archive-keyring.gpg
+  - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+      > /etc/apt/sources.list.d/google-chrome.list
+  - apt-get update
+  - apt-get install -y terraform gh azure-cli google-cloud-cli google-chrome-stable powershell
+  - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  - install -o root -g root -m 0755 kubectl /usr/bin/kubectl
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+  - unzip -q /tmp/awscliv2.zip -d /tmp
+  - /tmp/aws/install
+  - rm -rf /tmp/aws /tmp/awscliv2.zip
+  - ansible-galaxy collection install fortinet.console fortinet.fortiadc fortinet.fortianalyzer fortinet.fortiflexvm fortinet.fortimanager fortinet.fortios fortinet.fortiswitch fortinet.fortiweb
+  - mkfs.ext4 /dev/disk/azure/scsi1/lun0 || true
+  - mkfs.ext4 /dev/disk/azure/scsi1/lun1 || true
   - mkdir -p /var/lib/docker
-  - mount /dev/sdd /var/lib/docker
-  - echo '/dev/sdc /home ext4 defaults,nofail 0 2' >> /etc/fstab
-  - echo '/dev/sdd /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
-  - npm install -g @devcontainers/cli
+  - mount /dev/disk/azure/scsi1/lun1 /var/lib/docker
+  # - echo '/dev/disk/azure/scsi1/lun0 /home ext4 defaults,nofail 0 2' >> /etc/fstab
+  - echo '/dev/disk/azure/scsi1/lun1 /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -i nodejs
+  - npm install -g npm@latest
+  - npm install -g @devcontainers/cli bash-language-server
+  - wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
   - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf

@@ -140,6 +140,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
+  #size = "Standard_M16ms"
   size                  = "Standard_D4s_v3"
 
   identity {
@@ -149,7 +150,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   custom_data = filebase64("${path.module}/cloud-init.yaml")
 
   os_disk {
-    name                 = "myOsDisk"
+    name                 = "${var.vm_name}-osdisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
     disk_size_gb         = 256
@@ -179,7 +180,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "home" {
   managed_disk_id           = azurerm_managed_disk.home.id
   virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
   lun                       = 0
-  caching                   = "ReadWrite"
+  caching                   = "ReadOnly"
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
@@ -187,4 +188,6 @@ resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
   virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
   lun                       = 1
   caching                   = "ReadWrite"
+  # caching                   = "None"
+  #write_accelerator_enabled = true
 }
