@@ -24,6 +24,14 @@ write_files:
       KbdInteractiveAuthentication yes
 
 runcmd:
+  - mkfs.ext4 /dev/sdc || true
+  - mkfs.ext4 /dev/sdd || true
+  - mkdir -p /home
+  - mount /dev/sdc /home
+  - mkdir -p /var/lib/docker
+  - mount /dev/sdd /var/lib/docker
+  - echo '/dev/sdc /home ext4 defaults,nofail 0 2' >> /etc/fstab
+  - echo '/dev/sdd /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
   - npm install -g @devcontainers/cli
   - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf

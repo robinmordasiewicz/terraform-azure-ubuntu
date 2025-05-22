@@ -17,7 +17,25 @@ variable "username" {
 }
 
 variable "action-runner" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Set to true if you want to create an action runner VM."
+}
+
+variable "vm_name" {
+  type        = string
+  description = "Name of the VM"
+  default     = "devcontainer"
+}
+
+variable "home_disk_size_gb" {
+  type        = number
+  description = "Size of the /home disk in GB"
+  default     = 1024
+}
+
+variable "docker_disk_size_gb" {
+  type        = number
+  description = "Size of the Docker volume disk in GB"
+  default     = 512
 }

@@ -116,9 +116,27 @@ resource "azurerm_storage_account" "my_storage_account" {
   account_replication_type = "LRS"
 }
 
+resource "azurerm_managed_disk" "home" {
+  name                 = "${var.vm_name}-home-disk"
+  location             = azurerm_resource_group.rg.location
+  resource_group_name  = azurerm_resource_group.rg.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = var.home_disk_size_gb
+}
+
+resource "azurerm_managed_disk" "docker" {
+  name                 = "${var.vm_name}-docker-disk"
+  location             = azurerm_resource_group.rg.location
+  resource_group_name  = azurerm_resource_group.rg.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = var.docker_disk_size_gb
+}
+
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
-  name                  = "myVM"
+  name                  = var.vm_name
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
@@ -155,4 +173,20 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
   }
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "home" {
+  managed_disk_id           = azurerm_managed_disk.home.id
+  virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
+  lun                       = 0
+  caching                   = "ReadWrite"
+  write_accelerator_enabled = true
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
+  managed_disk_id           = azurerm_managed_disk.docker.id
+  virtual_machine_id        = azurerm_linux_virtual_machine.my_terraform_vm.id
+  lun                       = 1
+  caching                   = "ReadWrite"
+  write_accelerator_enabled = true
 }
