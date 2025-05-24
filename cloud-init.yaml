@@ -124,7 +124,9 @@ runcmd:
   - git clone https://github.com/tomasiser/vim-code-dark /etc/skel/.vim/pack/themes/start/vim-code-dark
   - curl -L https://raw.githubusercontent.com/rupa/z/master/z.sh -o /etc/skel/.z
   # - export ZSH_THEME="robbyrussell" && export ZSH="/etc/skel/.oh-my-zsh" && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
-  - ZSH_THEME="robbyrussell" ZSH="/etc/skel/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
+  #- ZSH_THEME="robbyrussell" ZSH="/etc/skel/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
+  - wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+  - ZSH=/etc/skel/.oh-my-zsh ZSH_THEME=robbyrussell sh install.sh --unattended
   - curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin -t /usr/local/share/oh-my-posh && curl -L -o /usr/local/share/oh-my-posh/powerlevel10k.omp.json https://raw.githubusercontent.com/amerintxperts/dotfiles/main/powerlevel10k.omp.json && oh-my-posh disable notice
   - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
   - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && echo 'CODER_HTTP_ADDRESS=0.0.0.0:80' > /etc/coder.d/coder.env && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
