@@ -26,6 +26,7 @@ packages:
   - fonts-powerline
   - fzf
   - mtr
+  - lsd
   - tcpdump
   - nmap
   - python3-full
@@ -47,10 +48,9 @@ write_files:
       KbdInteractiveAuthentication yes
 
 runcmd:
-  - source /etc/os-release && curl -fsSL https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb \
-      -o /tmp/packages-microsoft-prod.deb
+  - . /etc/os-release && curl -fsSL "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
   - dpkg -i /tmp/packages-microsoft-prod.deb
-  - rm /tmp/packages-microsoft-prod.deb
+  - rm -f /tmp/packages-microsoft-prod.deb
   - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg
   - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     > /etc/apt/sources.list.d/hashicorp.list
@@ -85,11 +85,8 @@ runcmd:
   - mount /dev/disk/azure/scsi1/lun1 /var/lib/docker
   # - echo '/dev/disk/azure/scsi1/lun0 /home ext4 defaults,nofail 0 2' >> /etc/fstab
   - echo '/dev/disk/azure/scsi1/lun1 /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
-  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-  - apt-get install -i nodejs
-  - npm install -g npm@latest
+  - export NVM_DIR="/usr/bin/nvm" && git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR" && \. "$NVM_DIR/nvm.sh" && nvm install node
   - npm install -g @devcontainers/cli bash-language-server
-  - wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
   - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
@@ -111,6 +108,23 @@ runcmd:
     }
     EOF
   - echo '+nostats +nocomments +nocmd +noquestion +recurse +search' > /etc/skel/.digrc
+  - curl https://raw.githubusercontent.com/amerintlxperts/dotfiles/refs/heads/main/.p10k.zsh -o /etc/skel/.p10k.zsh
+  - curl https://raw.githubusercontent.com/amerintlxperts/dotfiles/refs/heads/main/.vimrc -o /etc/skel/.vimrc
+  - mkdir -p /etc/skel/.oh-my-posh/themes/
+  - curl https://raw.githubusercontent.com/amerintlxperts/dotfiles/refs/heads/main/powerlevel10k.omp.json -o /etc/skel/.oh-my-posh/themes/powerlevel10k.omp.json
+  - mkdir -p /etc/skel/.vim/pack/plugin/start
+  - git clone https://github.com/vim-airline/vim-airline /etc/skel/.vim/pack/plugin/start/vim-airline
+  - git clone https://github.com/preservim/nerdtree.git /etc/skel/.vim/pack/plugin/start/nerdtree
+  - git clone https://github.com/junegunn/fzf.vim.git /etc/skel/.vim/pack/plugin/start/fzf
+  - git clone https://github.com/airblade/vim-gitgutter.git /etc/skel/.vim/pack/plugin/start/vim-gitgutter
+  - git clone https://github.com/tpope/vim-fugitive.git /etc/skel/.vim/pack/plugin/start/vim-fugitive
+  - git clone --depth 1 https://github.com/sheerun/vim-polyglot /etc/skel/.vim/pack/plugin/start/vim-polyglot
+  - git clone https://github.com/hashivim/vim-terraform.git /etc/skel/.vim/pack/plugin/start/vim-terraform
+  - mkdir -p /etc/skel/.vim/pack/themes/start
+  - git clone https://github.com/tomasiser/vim-code-dark /etc/skel/.vim/pack/themes/start/vim-code-dark
+  - curl -L https://raw.githubusercontent.com/rupa/z/master/z.sh -o /etc/skel/.z
+  # - export ZSH_THEME="robbyrussell" && export ZSH="/etc/skel/.oh-my-zsh" && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
+  - ZSH_THEME="robbyrussell" ZSH="/etc/skel/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
   - curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin -t /usr/local/share/oh-my-posh && curl -L -o /usr/local/share/oh-my-posh/powerlevel10k.omp.json https://raw.githubusercontent.com/amerintxperts/dotfiles/main/powerlevel10k.omp.json && oh-my-posh disable notice
   - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
   - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && echo 'CODER_HTTP_ADDRESS=0.0.0.0:80' > /etc/coder.d/coder.env && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
