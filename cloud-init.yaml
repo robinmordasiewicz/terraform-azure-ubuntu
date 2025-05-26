@@ -31,63 +31,146 @@ apt:
       keyserver: https://dl-ssl.google.com/linux/linux_signing_key.pub
       keyid: 7721F63BD38B4796
     speedtest-cli:
-      source: deb [arch=amd64 signed-by=$KEY_FILE] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ $RELEASE main
+      source: deb [arch=amd64 signed-by=$KEY_FILE] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ jammy main
       keyserver: https://packagecloud.io/ookla/speedtest-cli/gpgkey
       keyid: 31EB3981E723ACAA
+    docker:
+      source: deb [arch=amd64 signed-by=$KEY_FILE] https://download.docker.com/linux/ubuntu noble stable
+      keyserver: https://download.docker.com/linux/ubuntu/gpg
+      keyid: 8D81803C0EBFCD88
 
 packages:
+  - alsa-utils
   - ansible
+  - apache2-utils
+  - apparmor
   - apt-transport-https
+  - asciidoctor
   - authd
+  - autoconf
   - azure-cli
   - bash-completion
+  - bat
   - ca-certificates
+  - cockpit
+  - cmake
   - curl
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+  - docker-ce-rootless-extras
+  - docker-buildx-plugin
   - dos2unix
   - dpkg
   - dpkg-dev
   - dnsutils
+  - ffmpeg
   - file
   - fontconfig
   - fonts-powerline
+  - frei0r-plugins
+  - fuse3
   - fzf
   - gh
   - gnupg
+  - graphviz
+  - gstreamer1.0-plugins-base
+  - gstreamer1.0-plugins-good
+  - gstreamer1.0-plugins-bad
+  - gstreamer1.0-plugins-ugly
   - google-cloud-cli
   - google-chrome-stable
+  - imagemagick
+  - inkscape
+  - iputils-ping
+  - ladspa-sdk
+  - libapache2-mod-php
+  - libavif-dev
+  - libfuse3-3
+  - libgstreamer1.0-0
+  - libappindicator3-1
+  - libdbusmenu-glib4
+  - libdbusmenu-gtk3-4
+  - libfftw3-bin
+  - libfftw3-dev
+  - libfftw3-long3
+  - libfftw3-quad3
+  - libfftw3-single3
+  - libfuse2
+  - libgavl2
+  - libgl1-mesa-dri
+  - libgl1
+  - libgif-dev
+  - libglu1-mesa
+  - libmovit-dev
   - libnotify4
+  - libpoppler-cpp-dev
   - libsecret-1-0
+  - libsecret-1-dev
   - libsecret-common
+  - libsox-fmt-all
+  - libglx-mesa0
+  - libvulkan1
+  - libvidstab-dev
+  - libyelp-dev
+  - locales
+  - locales-all
   - lsb-release
   - lsd
+  - melt
+  - mesa-utils
+  - mesa-utils-bin
+  - mesa-vulkan-drivers
   - mtr
   - nmap
+  - npm
+  - php
+  - php-cli
+  - php-cgi
+  - php-mysql
+  - php-pgsql
   - python3-full
+  - python3-pip
+  - snapd
   - software-properties-common
+  - squashfs-tools
+  - swh-plugins
+  - sox
   - speedtest
   - sqlite3
   - terraform
+  - tesseract-ocr
   - tcpdump
   - tofrodos
   - ubuntu-restricted-extras
   - ubuntu-drivers-common
   - unzip
+  - vlc
+  - xdg-utils
   - yamllint
+  - yelp-tools
   - zsh
 
 snap:
   commands:
-    - ['install', 'authd-msentraid']
+    01: ['install', 'authd-msentraid']
+    02: ['install', 'shfmt']
 
 write_files:
-  - path: /etc/ssh/sshd_config.d/authd.conf
+  - path: /etc/ssh/sshd_config.d/custom.conf
     content: |
       UsePAM yes
       KbdInteractiveAuthentication yes
+      PrintMotd no
 
 runcmd:
+  - curl -s https://fluxcd.io/install.sh | sudo bash
+  - python3 -m pip install --break-system-packages --ignore-installed aider-chat ansible ansible-creator ansible-dev-environment azure-cognitiveservices-speech docs-chat-bot fastapi git-filter-repo google-api-python-client markitdown mkdocs-add-teaser mkdocs-awesome-pages-plugin mkdocs-childpages-card-grid-plugin mkdocs-enumerate-headings-plugin mkdocs-exclude mkdocs-git-authors-plugin mkdocs-git-committers-plugin-2 mkdocs-github-admonitions-plugin mkdocs-git-revision-date-localized-plugin mkdocs-glightbox mkdocs-literate-nav mkdocs-material 'mkdocs-material[imaging]' mkdocs-minify-plugin mkdocs-monorepo-plugin mkdocs-pdf-export-plugin mkdocs-same-dir mkdocs-section-index mkdocs-table-reader-plugin mkdocs-with-pdf 'mkdocstrings[crystal]' 'mkdocstrings[python]' oauth2client oterm playwright progressbar2 pydantic pytest-playwright uvicorn
+  - curl -fsSL https://ollama.com/install.sh | sh
   - curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s --
   - curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+  - touch /etc/skel/.hushlogin
   - git clone --depth=1 https://github.com/tfutils/tfenv.git /etc/skel/.tfenv
   - . /etc/os-release && curl -fsSL "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
   - [ bash, -lc, "export DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none && dpkg -i /tmp/packages-microsoft-prod.deb" ]
@@ -100,6 +183,11 @@ runcmd:
     curl -s -L "${download_url}" -o "drawio.deb"
     sudo dpkg -i drawio.deb
     rm drawio.deb
+  - |
+    LACEWORK_VERSION=$(curl -s "https://api.github.com/repos/lacework/extensible-reporting/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -L -o lw_report_gen "https://github.com/lacework/extensible-reporting/releases/download/v${LACEWORK_VERSION}/lw_report_gen_linux_x86_64"
+    install lw_report_gen /usr/local/bin
+    rm lw_report_gen
   - curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin -t /usr/local/share/oh-my-posh && curl -L -o /usr/local/share/oh-my-posh/powerlevel10k.omp.json https://raw.githubusercontent.com/amerintxperts/dotfiles/main/powerlevel10k.omp.json && oh-my-posh disable notice
   - mkdir -p "/usr/share/fonts/powerline" && curl -L https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf -o /usr/share/fonts/powerline/PowerlineSymbols.otf && mkdir -p /etc/fonts/conf.avail && curl -L https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf -o /etc/fonts/conf.avail/10-powerline-symbols.conf && fc-cache -f /usr/share/fonts
   - ZSH=/etc/skel/.oh-my-zsh sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && mv /root/.zshrc /etc/skel/
@@ -119,8 +207,9 @@ runcmd:
   - mount /dev/disk/azure/scsi1/lun1 /var/lib/docker
   # - echo '/dev/disk/azure/scsi1/lun0 /home ext4 defaults,nofail 0 2' >> /etc/fstab
   - echo '/dev/disk/azure/scsi1/lun1 /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
+  - systemctl is-active --quiet docker && (systemctl reload docker || systemctl restart docker) || systemctl start docker
   - export NVM_DIR="/usr/bin/nvm" && git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR" && \. "$NVM_DIR/nvm.sh" && nvm install node
-  - npm install -g @devcontainers/cli bash-language-server
+  - npm install -g b@devcontainers/cli bash-language-server cwebp dockerfile-language-server-nodejs eslint eslint-config-prettier gatsby-cli javascript-typescript-langserver jsonlint newman prettier puppeteer setup-eslint-config sql-language-server stylelint-config-prettier svgo unified-language-server vscode-css-languageserver-bin vscode-html-languageserver-bin vscode-json-languageserver-bin yaml-language-server
   - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
