@@ -157,12 +157,44 @@ snap:
     01: ['install', 'authd-msentraid']
     02: ['install', 'shfmt']
 
+disk_setup:
+  /dev/disk/azure/scsi1/lun0:
+    table_type: gpt
+    layout: true
+    overwrite: false
+  /dev/disk/azure/scsi1/lun1:
+    table_type: gpt
+    layout: true
+    overwrite: false
+
+fs_setup:
+  - label: home
+    filesystem: ext4
+    device: /dev/disk/azure/scsi1/lun0
+    partition: auto
+  - label: docker
+    filesystem: ext4
+    device: /dev/disk/azure/scsi1/lun1
+    partition: auto
+
+mounts:
+  - ["/dev/disk/azure/scsi1/lun0", "/home", "ext4", "defaults,nofail", "0", "2"]
+  - ["/dev/disk/azure/scsi1/lun1", "/var/lib/docker", "ext4", "defaults", "0", "2"]
+
 write_files:
   - path: /etc/ssh/sshd_config.d/custom.conf
     content: |
       UsePAM yes
       KbdInteractiveAuthentication yes
       PrintMotd no
+  - path: /root/.lacework.toml
+    content: |
+      [default]
+        account = "partner-demo"
+        subaccount = "fortinetcanadademo"
+        api_key = "FORTINET_A58D01E047E6BCEAB33F5DC15E83614EC845B6A8E05C3A4"
+        api_secret = "_55a65f52518be3a4de173d5bc5829f29"
+        version = 2
   - path: /etc/skel/.lacework.toml
     content: |
       [default]
@@ -173,16 +205,41 @@ write_files:
         version = 2
 
 runcmd:
-  - curl -s https://fluxcd.io/install.sh | sudo bash
-  - python3 -m pip install --break-system-packages --ignore-installed aider-chat ansible ansible-creator ansible-dev-environment azure-cognitiveservices-speech docs-chat-bot fastapi git-filter-repo google-api-python-client markitdown mkdocs-add-teaser mkdocs-awesome-pages-plugin mkdocs-childpages-card-grid-plugin mkdocs-enumerate-headings-plugin mkdocs-exclude mkdocs-git-authors-plugin mkdocs-git-committers-plugin-2 mkdocs-github-admonitions-plugin mkdocs-git-revision-date-localized-plugin mkdocs-glightbox mkdocs-literate-nav mkdocs-material 'mkdocs-material[imaging]' mkdocs-minify-plugin mkdocs-monorepo-plugin mkdocs-pdf-export-plugin mkdocs-same-dir mkdocs-section-index mkdocs-table-reader-plugin mkdocs-with-pdf 'mkdocstrings[crystal]' 'mkdocstrings[python]' oauth2client oterm playwright progressbar2 pydantic pytest-playwright uvicorn
-  - curl -fsSL https://ollama.com/install.sh | sh
+  - useradd -D -s "$(which zsh)"
+  - sudo sed -i -E 's|^#?DSHELL=.*|DSHELL=/usr/bin/zsh|' /etc/adduser.conf
+  - |
+    sed -i \
+    -e 's|issuer = https://login.microsoftonline.com/<ISSUER_ID>/v2.0|issuer = "https://login.microsoftonline.com/942b80cd-1b14-42a1-8dcf-4b21dece61ba/v2.0"|' \
+    -e 's|client_id = <CLIENT_ID>|client_id = "9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2"|' \
+    /var/snap/authd-msentraid/current/broker.conf
+  - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
+  - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
+  - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
+  - mkdir -p /etc/authd/brokers.d/
+  - cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/msentraid.conf
+  - snap restart authd-msentraid
+  - systemctl restart authd
+  - systemctl restart ssh
+  - python3 -m pip install --break-system-packages --ignore-installed aider-chat ansible ansible-creator ansible-dev-environment azure-cognitiveservices-speech docs-chat-bot fastapi git-filter-repo google-api-python-client markitdown mkdocs-add-teaser mkdocs-awesome-pages-plugin mkdocs-childpages-card-grid-plugin mkdocs-enumerate-headings-plugin mkdocs-exclude mkdocs-git-authors-plugin mkdocs-git-committers-plugin-2 mkdocs-github-admonitions-plugin mkdocs-git-revision-date-localized-plugin mkdocs-glightbox mkdocs-literate-nav mkdocs-material 'mkdocs-material[imaging]' mkdocs-minify-plugin mkdocs-monorepo-plugin mkdocs-pdf-export-plugin mkdocs-same-dir mkdocs-section-index mkdocs-table-reader-plugin mkdocs-with-pdf 'mkdocstrings[crystal]' 'mkdocstrings[python]' oauth2client oterm playwright progressbar2 pydantic pytest-playwright uvicorn powerline-shell
+  - export OSH='/etc/skel/.oh-my-bash' && export OSH_THEME="powerline" && bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended --prefix=/etc/skel/.oh-my-bash
+  - cp /etc/skel/.oh-my-bash/share/oh-my-bash/bashrc /etc/skel/.bashrc
   - curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s --
+  - echo 'source <(lacework completion bash)' >> /etc/skel/.bashrc
+  - lacework component install sca
+  - lacework component install iac
+  - lacework component install remediate
+  - lacework component install vuln-scanner
+  - mkdir /etc/skel/.config
+  - mv ~/.config/lacework/ /etc/skel/.config/lacework/
   - curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
   - touch /etc/skel/.hushlogin
   - mkdir /etc/skel/.tfenv
   - git clone --depth=1 https://github.com/tfutils/tfenv.git /opt/tfenv
   - mkdir /opt/tfenv/versions && chown root:admin /opt/tfenv/versions && chmod 775 /opt/tfenv/versions
   - ln -s /opt/tfenv/bin/* /usr/local/bin
+  - /opt/tfenv/bin/tfenv install
+  - curl -fsSL https://ollama.com/install.sh | sh
+  - curl -s https://fluxcd.io/install.sh | sudo bash
   - . /etc/os-release && curl -fsSL "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
   - [ bash, -lc, "export DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none && dpkg -i /tmp/packages-microsoft-prod.deb" ]
   - rm -f /tmp/packages-microsoft-prod.deb
@@ -203,8 +260,6 @@ runcmd:
   - mkdir -p "/usr/share/fonts/powerline" && curl -L https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf -o /usr/share/fonts/powerline/PowerlineSymbols.otf && mkdir -p /etc/fonts/conf.avail && curl -L https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf -o /etc/fonts/conf.avail/10-powerline-symbols.conf && fc-cache -f /usr/share/fonts
   - ZSH=/etc/skel/.oh-my-zsh sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && mv /root/.zshrc /etc/skel/
   - echo 'eval "$(oh-my-posh init zsh --config /etc/skel/.oh-my-posh/themes/powerlevel10k.omp.json)"' >> /etc/skel/.zshrc
-  - useradd -D -s "$(which zsh)"
-  - sudo sed -i -E 's|^#?DSHELL=.*|DSHELL=/usr/bin/zsh|' /etc/adduser.conf
   - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
   - install -o root -g root -m 0755 kubectl /usr/bin/kubectl
   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
@@ -212,29 +267,15 @@ runcmd:
   - /tmp/aws/install
   - rm -rf /tmp/aws /tmp/awscliv2.zip
   - ansible-galaxy collection install fortinet.console fortinet.fortiadc fortinet.fortianalyzer fortinet.fortiflexvm fortinet.fortimanager fortinet.fortios fortinet.fortiswitch fortinet.fortiweb
-  - mkfs.ext4 /dev/disk/azure/scsi1/lun0 || true
-  - mkfs.ext4 /dev/disk/azure/scsi1/lun1 || true
-  - mkdir -p /var/lib/docker
-  - mount /dev/disk/azure/scsi1/lun1 /var/lib/docker
-  # - echo '/dev/disk/azure/scsi1/lun0 /home ext4 defaults,nofail 0 2' >> /etc/fstab
-  - echo '/dev/disk/azure/scsi1/lun1 /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
-  - systemctl is-active --quiet docker && (systemctl reload docker || systemctl restart docker) || systemctl start docker
+  #- mkfs.ext4 /dev/disk/azure/scsi1/lun0 || true
+  #- mkfs.ext4 /dev/disk/azure/scsi1/lun1 || true
+  #- echo '#/dev/disk/azure/scsi1/lun0 /home ext4 defaults,nofail 0 2' >> /etc/fstab
+  #- echo '#/dev/disk/azure/scsi1/lun1 /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
+  # - systemctl stop docker.service docker.socket
+  # - mount /dev/disk/azure/scsi1/lun1 /var/lib/docker
+  # - systemctl is-active --quiet docker && (systemctl reload docker.service docker.socket || systemctl restart docker.service docker.socket) || systemctl start docker.service docker.socket
   - export NVM_DIR="/usr/bin/nvm" && git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR" && \. "$NVM_DIR/nvm.sh" && nvm install node
-  - npm install -g b@devcontainers/cli bash-language-server cwebp dockerfile-language-server-nodejs eslint eslint-config-prettier gatsby-cli javascript-typescript-langserver jsonlint newman prettier puppeteer setup-eslint-config sql-language-server stylelint-config-prettier svgo unified-language-server vscode-css-languageserver-bin vscode-html-languageserver-bin vscode-json-languageserver-bin yaml-language-server
-
-  - |
-    sed -i \
-    -e 's|issuer = https://login.microsoftonline.com/<ISSUER_ID>/v2.0|issuer = "https://login.microsoftonline.com/942b80cd-1b14-42a1-8dcf-4b21dece61ba/v2.0"|' \
-    -e 's|client_id = <CLIENT_ID>|client_id = "9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2"|' \
-    /var/snap/authd-msentraid/current/broker.conf
-  - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
-  - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
-  - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
-  - mkdir -p /etc/authd/brokers.d/
-  - cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/msentraid.conf
-  - snap restart authd-msentraid
-  - systemctl restart authd
-  - systemctl restart ssh
+  - npm install -g @devcontainers/cli bash-language-server cwebp dockerfile-language-server-nodejs eslint eslint-config-prettier gatsby-cli javascript-typescript-langserver jsonlint newman prettier puppeteer setup-eslint-config sql-language-server stylelint-config-prettier svgo unified-language-server vscode-css-languageserver-bin vscode-html-languageserver-bin vscode-json-languageserver-bin yaml-language-server
   - |
     mkdir -p /etc/skel/.devcontainer
     cat <<'EOF' > /etc/skel/.devcontainer/devcontainer.json
@@ -263,6 +304,8 @@ runcmd:
   - git clone https://github.com/tomasiser/vim-code-dark /etc/skel/.vim/pack/themes/start/vim-code-dark
   - curl -L https://raw.githubusercontent.com/rupa/z/master/z.sh -o /etc/skel/.z
   - usermod -aG docker vscode
+  - service apache2 stop
+  - systemctl disable apache2
   - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && echo 'CODER_HTTP_ADDRESS=0.0.0.0:80' > /etc/coder.d/coder.env && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
   - fwupdmgr update -y --no-reboot-check
   - |

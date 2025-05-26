@@ -189,5 +189,5 @@ resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
   lun                = 1
   caching            = "ReadWrite"
   # caching                   = "None"
-  #write_accelerator_enabled = true
+  # write_accelerator_enabled = true
 }
