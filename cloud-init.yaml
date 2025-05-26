@@ -171,7 +171,9 @@ runcmd:
   - curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s --
   - curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
   - touch /etc/skel/.hushlogin
-  - git clone --depth=1 https://github.com/tfutils/tfenv.git /etc/skel/.tfenv
+  - mkdir /etc/skel/.tfenv
+  - git clone --depth=1 https://github.com/tfutils/tfenv.git /opt/tfenv
+  - ln -s /opt/tfenv/bin/* /usr/local/bin
   - . /etc/os-release && curl -fsSL "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
   - [ bash, -lc, "export DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none && dpkg -i /tmp/packages-microsoft-prod.deb" ]
   - rm -f /tmp/packages-microsoft-prod.deb
@@ -210,11 +212,11 @@ runcmd:
   - systemctl is-active --quiet docker && (systemctl reload docker || systemctl restart docker) || systemctl start docker
   - export NVM_DIR="/usr/bin/nvm" && git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR" && \. "$NVM_DIR/nvm.sh" && nvm install node
   - npm install -g b@devcontainers/cli bash-language-server cwebp dockerfile-language-server-nodejs eslint eslint-config-prettier gatsby-cli javascript-typescript-langserver jsonlint newman prettier puppeteer setup-eslint-config sql-language-server stylelint-config-prettier svgo unified-language-server vscode-css-languageserver-bin vscode-html-languageserver-bin vscode-json-languageserver-bin yaml-language-server
+
   - |
-    sudo sed -i '
-    s|^issuer =.*|issuer = "https://login.microsoftonline.com/942b80cd-1b14-42a1-8dcf-4b21dece61ba/v2.0"|;
-    s|^client_id =.*|client_id = "9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2"|
-    '
+    sed -i \
+    -e 's|issuer = https://login.microsoftonline.com/<ISSUER_ID>/v2.0|issuer = "https://login.microsoftonline.com/942b80cd-1b14-42a1-8dcf-4b21dece61ba/v2.0"|' \
+    -e 's|client_id = <CLIENT_ID>|client_id = "9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2"|' \
     /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
@@ -251,7 +253,7 @@ runcmd:
   - mkdir -p /etc/skel/.vim/pack/themes/start
   - git clone https://github.com/tomasiser/vim-code-dark /etc/skel/.vim/pack/themes/start/vim-code-dark
   - curl -L https://raw.githubusercontent.com/rupa/z/master/z.sh -o /etc/skel/.z
-  - curl -fsSL https://get.docker.com | sh && usermod -aG docker vscode
+  - usermod -aG docker vscode
   - export HOME="/root" && curl -fsSL https://coder.com/install.sh | sh -s -- && usermod -aG docker coder && echo 'CODER_HTTP_ADDRESS=0.0.0.0:80' > /etc/coder.d/coder.env && systemctl enable --now coder && journalctl -u coder.service -b && rm -rf "/root/.cache/coder/"
   - fwupdmgr update -y --no-reboot-check
   - |

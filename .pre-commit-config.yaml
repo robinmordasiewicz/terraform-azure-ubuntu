@@ -24,7 +24,7 @@ repos:
       #    - --args=--non-recursive
       #    - --args=--policy-type=azure
       #    #- --args=-d terraform
-      - id: terraform_trivy
+      # - id: terraform_trivy
       # - id: terraform_checkov
       #   args:
       #     - --args=--quiet

@@ -16,11 +16,11 @@ variable "username" {
   default     = "vscode"
 }
 
-variable "action-runner" {
-  type        = bool
-  default     = false
-  description = "Set to true if you want to create an action runner VM."
-}
+#variable "action-runner" {
+#  type        = bool
+#  default     = false
+#  description = "Set to true if you want to create an action runner VM."
+#}
 
 variable "vm_name" {
   type        = string
