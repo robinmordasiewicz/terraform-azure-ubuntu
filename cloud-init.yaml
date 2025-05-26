@@ -210,7 +210,12 @@ runcmd:
   - systemctl is-active --quiet docker && (systemctl reload docker || systemctl restart docker) || systemctl start docker
   - export NVM_DIR="/usr/bin/nvm" && git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR" && \. "$NVM_DIR/nvm.sh" && nvm install node
   - npm install -g b@devcontainers/cli bash-language-server cwebp dockerfile-language-server-nodejs eslint eslint-config-prettier gatsby-cli javascript-typescript-langserver jsonlint newman prettier puppeteer setup-eslint-config sql-language-server stylelint-config-prettier svgo unified-language-server vscode-css-languageserver-bin vscode-html-languageserver-bin vscode-json-languageserver-bin yaml-language-server
-  - sed -i 's|<CLIENT_ID>|9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2|g; s|<ISSUER_ID>|942b80cd-1b14-42a1-8dcf-4b21dece61ba|g' /var/snap/authd-msentraid/current/broker.conf
+  - |
+    sudo sed -i '
+    s|^issuer =.*|issuer = "https://login.microsoftonline.com/942b80cd-1b14-42a1-8dcf-4b21dece61ba/v2.0"|;
+    s|^client_id =.*|client_id = "9f2b9fdd-ac54-4611-8b1a-2cf24b656ea2"|
+    '
+    /var/snap/authd-msentraid/current/broker.conf
   - sudo sed -i 's/^#allowed_users = OWNER$/allowed_users = ALL/' /var/snap/authd-msentraid/current/broker.conf
   - echo 'ssh_allowed_suffixes = @fortinet-us.com' >> /var/snap/authd-msentraid/current/broker.conf
   - sed -i 's/^\(LOGIN_TIMEOUT\t\t\)[0-9]\+/\1360/' /etc/login.defs
