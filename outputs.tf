@@ -14,15 +14,15 @@ output "ssh_config_instructions" {
 
 1. Create the following file ~/.ssh/config with the content:
 
-Host devcontainer
+Host ${azurerm_linux_virtual_machine.my_terraform_vm.name.computer_name}
   HostName ${azurerm_linux_virtual_machine.my_terraform_vm.public_ip_address}
-  User vscode
+  User ${azurerm_linux_virtual_machine.my_terraform_vm.name.admin_username}
   ForwardAgent yes
-  IdentityFile ~/.ssh/devcontainer
+  IdentityFile ~/.ssh/${azurerm_linux_virtual_machine.my_terraform_vm.name.computer_name}
 
-2. Create the file ~/.ssh/devcontainer and save the private key using:
+2. Create the file ~/.ssh/${azurerm_linux_virtual_machine.my_terraform_vm.name.computer_name} and save the private key using:
 
-terraform output -raw key_data > ~/.ssh/devcontainer
+terraform output -raw key_data > ~/.ssh/${azurerm_linux_virtual_machine.my_terraform_vm.name.computer_name}
 
 EOF
 }

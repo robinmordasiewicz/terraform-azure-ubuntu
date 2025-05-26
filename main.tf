@@ -163,7 +163,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
     version   = "latest"
   }
 
-  computer_name  = "cloud-shell"
+  computer_name  = "CLOUDSHELL"
   admin_username = var.username
 
   admin_ssh_key {

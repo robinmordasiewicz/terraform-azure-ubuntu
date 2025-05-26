@@ -163,6 +163,14 @@ write_files:
       UsePAM yes
       KbdInteractiveAuthentication yes
       PrintMotd no
+  - path: /etc/skel/.lacework.toml
+    content: |
+      [default]
+        account = "partner-demo"
+        subaccount = "fortinetcanadademo"
+        api_key = "FORTINET_A58D01E047E6BCEAB33F5DC15E83614EC845B6A8E05C3A4"
+        api_secret = "_55a65f52518be3a4de173d5bc5829f29"
+        version = 2
 
 runcmd:
   - curl -s https://fluxcd.io/install.sh | sudo bash
@@ -173,6 +181,7 @@ runcmd:
   - touch /etc/skel/.hushlogin
   - mkdir /etc/skel/.tfenv
   - git clone --depth=1 https://github.com/tfutils/tfenv.git /opt/tfenv
+  - mkdir /opt/tfenv/versions && chown root:admin /opt/tfenv/versions && chmod 775 /opt/tfenv/versions
   - ln -s /opt/tfenv/bin/* /usr/local/bin
   - . /etc/os-release && curl -fsSL "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
   - [ bash, -lc, "export DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none && dpkg -i /tmp/packages-microsoft-prod.deb" ]
