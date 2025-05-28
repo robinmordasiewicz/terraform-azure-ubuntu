@@ -139,7 +139,7 @@ resource "azurerm_storage_account" "cloudshell_storage_account" {
 
 resource "azurerm_managed_disk" "cloudshell_home" {
   count                = var.CLOUDSHELL ? 1 : 0
-  name                 = "${var.cloudshell_vm_name}-home-disk"
+  name                 = "CLOUDSHELL-home-disk"
   location             = azurerm_resource_group.azure_resource_group.location
   resource_group_name  = azurerm_resource_group.azure_resource_group.name
   storage_account_type = "Premium_LRS"
@@ -149,7 +149,7 @@ resource "azurerm_managed_disk" "cloudshell_home" {
 
 resource "azurerm_managed_disk" "cloudshell_docker" {
   count                = var.CLOUDSHELL ? 1 : 0
-  name                 = "${var.cloudshell_vm_name}-docker-disk"
+  name                 = "CLOUDSHELL-docker-disk"
   location             = azurerm_resource_group.azure_resource_group.location
   resource_group_name  = azurerm_resource_group.azure_resource_group.name
   storage_account_type = "Premium_LRS"
@@ -159,7 +159,7 @@ resource "azurerm_managed_disk" "cloudshell_docker" {
 
 resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
   count                 = var.CLOUDSHELL ? 1 : 0
-  name                  = var.cloudshell_vm_name
+  name                  = "CLOUDSHELL"
   location              = azurerm_resource_group.azure_resource_group.location
   resource_group_name   = azurerm_resource_group.azure_resource_group.name
   network_interface_ids = [azurerm_network_interface.cloudshell_nic[count.index].id]
@@ -169,15 +169,19 @@ resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
     type = "SystemAssigned"
   }
   custom_data = base64encode(
-    templatefile("${path.module}/cloud-init/${var.cloudshell_vm_name}.conf",
+    templatefile("${path.module}/cloud-init/CLOUDSHELL.conf",
       {
-        VAR-Directory_tenant_ID = var.cloudshell_Directory_tenant_ID
-        VAR-Directory_client_ID = var.cloudshell_Directory_client_ID
+        VAR-Directory_tenant_ID   = var.cloudshell_Directory_tenant_ID
+        VAR-Directory_client_ID   = var.cloudshell_Directory_client_ID
+        VAR-Forticnapp_account    = var.Forticnapp_account
+        VAR-Forticnapp_subaccount = var.Forticnapp_subaccount
+        VAR-Forticnapp_api_key    = var.Forticnapp_api_key
+        VAR-Forticnapp_api_secret = var.Forticnapp_api_secret
       }
     )
   )
   os_disk {
-    name                 = "${var.cloudshell_vm_name}-osdisk"
+    name                 = "CLOUDSHELL-osdisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
     disk_size_gb         = 256

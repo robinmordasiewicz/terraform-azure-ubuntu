@@ -21,3 +21,27 @@ variable "cloudshell_Directory_client_ID" {
   type        = string
   default     = "38f03b3c-8001-46d6-a55e-af266c8cbd50"
 }
+
+variable "Forticnapp_account" {
+  type        = string
+  description = "The FortiCnapp account name."
+  default     = "partner-demo"
+}
+
+variable "Forticnapp_subaccount" {
+  type        = string
+  description = "The FortiCnapp subaccount name."
+  default     = "fortinetcanadademo"
+}
+
+variable "Forticnapp_api_key" {
+  type        = string
+  description = "The FortiCnapp api_key."
+  default     = "FORTINET_A58D01E047E6BCEAB33F5DC15E83614EC845B6A8E05C3A4"
+}
+
+variable "Forticnapp_api_secret" {
+  type        = string
+  description = "The FortiCnapp api_secret."
+  default     = "_55a65f52518be3a4de173d5bc5829f29"
+}
