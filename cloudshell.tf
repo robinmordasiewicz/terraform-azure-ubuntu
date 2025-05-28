@@ -1,3 +1,29 @@
+resource "random_pet" "cloudshell_ssh_key_name" {
+  prefix    = "CLOUDSHELL"
+  separator = ""
+}
+
+resource "azapi_resource_action" "cloudshell_ssh_public_key_gen" {
+  type        = "Microsoft.Compute/sshPublicKeys@2022-11-01"
+  resource_id = azapi_resource.cloudshell_ssh_public_key.id
+  action      = "generateKeyPair"
+  method      = "POST"
+
+  response_export_values = ["publicKey", "privateKey"]
+}
+
+resource "azapi_resource" "cloudshell_ssh_public_key" {
+  type      = "Microsoft.Compute/sshPublicKeys@2022-11-01"
+  name      = random_pet.cloudshell_ssh_key_name.id
+  location  = azurerm_resource_group.azure_resource_group.location
+  parent_id = azurerm_resource_group.azure_resource_group.id
+}
+
+output "key_data" {
+  value     = azapi_resource_action.cloudshell_ssh_public_key_gen.output.privateKey
+  sensitive = true
+}
+
 resource "azurerm_virtual_network" "cloudshell_network" {
   name                = "cloudshell-Vnet"
   address_space       = ["10.0.0.0/16"]
@@ -91,26 +117,26 @@ resource "azurerm_storage_account" "cloudshell_storage_account" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_managed_disk" "home" {
-  name                 = "${var.vm_name}-home-disk"
+resource "azurerm_managed_disk" "cloudshell_home" {
+  name                 = "${var.cloudshell_vm_name}-home-disk"
   location             = azurerm_resource_group.azure_resource_group.location
   resource_group_name  = azurerm_resource_group.azure_resource_group.name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
-  disk_size_gb         = var.home_disk_size_gb
+  disk_size_gb         = var.cloudshell_home_disk_size_gb
 }
 
-resource "azurerm_managed_disk" "docker" {
-  name                 = "${var.vm_name}-docker-disk"
+resource "azurerm_managed_disk" "cloudshell_docker" {
+  name                 = "${var.cloudshell_vm_name}-docker-disk"
   location             = azurerm_resource_group.azure_resource_group.location
   resource_group_name  = azurerm_resource_group.azure_resource_group.name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
-  disk_size_gb         = var.docker_disk_size_gb
+  disk_size_gb         = var.cloudshell_docker_disk_size_gb
 }
 
 resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
-  name                  = var.vm_name
+  name                  = var.cloudshell_vm_name
   location              = azurerm_resource_group.azure_resource_group.location
   resource_group_name   = azurerm_resource_group.azure_resource_group.name
   network_interface_ids = [azurerm_network_interface.cloudshell_nic.id]
@@ -120,15 +146,15 @@ resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
     type = "SystemAssigned"
   }
   custom_data = base64encode(
-    templatefile("${path.module}/cloud-init/${var.vm_name}.conf",
+    templatefile("${path.module}/cloud-init/${var.cloudshell_vm_name}.conf",
       {
-        VAR-Directory-tenant-ID = var.Directory-tenant-ID
-        VAR-Directory-client-ID = var.Directory-client-ID
+        VAR-Directory_tenant_ID = var.cloudshell_Directory_tenant_ID
+        VAR-Directory_client_ID = var.cloudshell_Directory_client_ID
       }
     )
   )
   os_disk {
-    name                 = "${var.vm_name}-osdisk"
+    name                 = "${var.cloudshell_vm_name}-osdisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
     disk_size_gb         = 256
@@ -140,25 +166,25 @@ resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
     version   = "latest"
   }
   computer_name  = "CLOUDSHELL"
-  admin_username = var.username
+  admin_username = var.cloudshell_username
   admin_ssh_key {
-    username   = var.username
-    public_key = azapi_resource_action.ssh_public_key_gen.output.publicKey
+    username   = var.cloudshell_username
+    public_key = azapi_resource_action.cloudshell_ssh_public_key_gen.output.publicKey
   }
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.cloudshell_storage_account.primary_blob_endpoint
   }
 }
 
-resource "azurerm_virtual_machine_data_disk_attachment" "home" {
-  managed_disk_id    = azurerm_managed_disk.home.id
+resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_home" {
+  managed_disk_id    = azurerm_managed_disk.cloudshell_home.id
   virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm.id
   lun                = 0
   caching            = "ReadOnly"
 }
 
-resource "azurerm_virtual_machine_data_disk_attachment" "docker" {
-  managed_disk_id    = azurerm_managed_disk.docker.id
+resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_docker" {
+  managed_disk_id    = azurerm_managed_disk.cloudshell_docker.id
   virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm.id
   lun                = 1
   #caching            = "ReadWrite"
