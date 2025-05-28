@@ -10,30 +10,6 @@ variable "resource_group_location" {
   default     = "eastus"
 }
 
-variable "cloudshell_username" {
-  type        = string
-  description = "The username for the local account that will be created on the new VM."
-  default     = "ubuntu"
-}
-
-variable "cloudshell_vm_name" {
-  type        = string
-  description = "Name of the VM"
-  default     = "CLOUDSHELL"
-}
-
-variable "cloudshell_home_disk_size_gb" {
-  type        = number
-  description = "Size of the /home disk in GB"
-  default     = 1024
-}
-
-variable "cloudshell_docker_disk_size_gb" {
-  type        = number
-  description = "Size of the Docker volume disk in GB"
-  default     = 512
-}
-
 variable "cloudshell_Directory_tenant_ID" {
   type        = string
   description = "The tenant ID of the Azure Active Directory."
