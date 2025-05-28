@@ -1,3 +1,9 @@
+variable "CLOUDSHELL" {
+  type        = bool
+  description = "Enable or disable the creation of the Azure Cloud Shell VM."
+  default     = true
+}
+
 variable "resource_group_location" {
   type        = string
   description = "The Azure region where the resource group will be created."
