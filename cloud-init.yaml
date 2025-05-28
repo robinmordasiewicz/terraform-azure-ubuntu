@@ -282,6 +282,7 @@ runcmd:
   - ln -s /opt/tfenv/bin/* /usr/local/bin
   - tfenv init
   - tfenv install
+  - tfenv use
   - cp -a /root/.tfenv /etc/skel/.tfenv
   - export HOME=/root/.ollama && curl -fsSL https://ollama.com/install.sh | sh
   - systemctl start ollama.service
@@ -319,6 +320,7 @@ runcmd:
   - cp -a /root/.oh-my-zsh /etc/skel/.oh-my-zsh
   - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
   - install -o root -g root -m 0755 kubectl /usr/bin/kubectl
+  - curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /usr/local/bin
   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
   - unzip -q /tmp/awscliv2.zip -d /tmp
   - /tmp/aws/install
