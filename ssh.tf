@@ -1,5 +1,5 @@
 resource "random_pet" "ssh_key_name" {
-  prefix    = "ssh"
+  prefix    = "CLOUDSHELL"
   separator = ""
 }
 
@@ -15,8 +15,8 @@ resource "azapi_resource_action" "ssh_public_key_gen" {
 resource "azapi_resource" "ssh_public_key" {
   type      = "Microsoft.Compute/sshPublicKeys@2022-11-01"
   name      = random_pet.ssh_key_name.id
-  location  = azurerm_resource_group.rg.location
-  parent_id = azurerm_resource_group.rg.id
+  location  = azurerm_resource_group.azure_resource_group.location
+  parent_id = azurerm_resource_group.azure_resource_group.id
 }
 
 output "key_data" {
