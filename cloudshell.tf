@@ -22,11 +22,6 @@ resource "azapi_resource" "cloudshell_ssh_public_key" {
   parent_id = azurerm_resource_group.azure_resource_group.id
 }
 
-#output "key_data" {
-#  value     = azapi_resource_action.cloudshell_ssh_public_key_gen.output.privateKey
-#  sensitive = true
-#}
-
 resource "azurerm_virtual_network" "cloudshell_network" {
   count               = var.CLOUDSHELL ? 1 : 0
   name                = "cloudshell-Vnet"
@@ -147,6 +142,19 @@ resource "azurerm_managed_disk" "cloudshell_home" {
   disk_size_gb         = 1024
 }
 
+resource "azurerm_managed_disk" "cloudshell_authd" {
+  count                = var.CLOUDSHELL ? 1 : 0
+  name                 = "CLOUDSHELL-authd"
+  location             = azurerm_resource_group.azure_resource_group.location
+  resource_group_name  = azurerm_resource_group.azure_resource_group.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 5
+  #lifecycle {
+  #  prevent_destroy = true
+  #}
+}
+
 resource "azurerm_managed_disk" "cloudshell_docker" {
   count                = var.CLOUDSHELL ? 1 : 0
   name                 = "CLOUDSHELL-docker-disk"
@@ -155,7 +163,11 @@ resource "azurerm_managed_disk" "cloudshell_docker" {
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = 512
+  #lifecycle {
+  #  prevent_destroy = true
+  #}
 }
+
 
 resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
   count                 = var.CLOUDSHELL ? 1 : 0
@@ -211,11 +223,21 @@ resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_home" {
   caching            = "ReadOnly"
 }
 
+resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_authd" {
+  count              = var.CLOUDSHELL ? 1 : 0
+  managed_disk_id    = azurerm_managed_disk.cloudshell_authd[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
+  lun                = 1
+  caching            = "ReadOnly"
+  create_option      = "Attach"
+}
+
 resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_docker" {
   count                     = var.CLOUDSHELL ? 1 : 0
   managed_disk_id           = azurerm_managed_disk.cloudshell_docker[count.index].id
   virtual_machine_id        = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
-  lun                       = 1
+  lun                       = 2
   caching                   = "None"
   write_accelerator_enabled = true
+  create_option             = "Attach"
 }
