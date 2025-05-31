@@ -6,6 +6,10 @@ terraform {
       source  = "azure/azapi"
       version = "~>1.5"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "4.1.0"
+    }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~>3.0"
@@ -17,6 +21,7 @@ terraform {
   }
 }
 
+provider "tls" {}
 provider "azurerm" {
   features {}
 }

@@ -22,6 +22,12 @@ variable "cloudshell_Directory_client_ID" {
   default     = "38f03b3c-8001-46d6-a55e-af266c8cbd50"
 }
 
+variable "cloudshell_admin_username" {
+  type        = string
+  description = "The username for the Cloud Shell administrator."
+  default     = "ubuntu"
+}
+
 variable "Forticnapp_account" {
   type        = string
   description = "The FortiCnapp account name."
