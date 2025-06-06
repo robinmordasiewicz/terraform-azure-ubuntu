@@ -60,7 +60,9 @@ resource "azurerm_public_ip" "cloudshell_public_ip" {
   name                = "cloudshell-PublicIP"
   location            = azurerm_resource_group.azure_resource_group.location
   resource_group_name = azurerm_resource_group.azure_resource_group.name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  domain_name_label   = "cloudshell-${azurerm_resource_group.azure_resource_group.name}"
 }
 
 #resource "azurerm_dns_cname_record" "cloudshell_public_ip_dns" {
@@ -117,7 +119,6 @@ resource "azurerm_network_interface" "cloudshell_nic" {
   name                = "cloudshell-NIC"
   location            = azurerm_resource_group.azure_resource_group.location
   resource_group_name = azurerm_resource_group.azure_resource_group.name
-
   ip_configuration {
     name                          = "cloudshell_nic_configuration"
     subnet_id                     = azurerm_subnet.cloudshell_subnet[count.index].id
@@ -185,6 +186,18 @@ resource "azurerm_managed_disk" "cloudshell_docker" {
   }
 }
 
+resource "azurerm_managed_disk" "cloudshell_ollama" {
+  count                = var.CLOUDSHELL ? 1 : 0
+  name                 = "CLOUDSHELL-ollama-disk"
+  location             = azurerm_resource_group.azure_resource_group.location
+  resource_group_name  = azurerm_resource_group.azure_resource_group.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 1024
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
 resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
   count                 = var.CLOUDSHELL ? 1 : 0
@@ -192,8 +205,10 @@ resource "azurerm_linux_virtual_machine" "cloudshell_vm" {
   location              = azurerm_resource_group.azure_resource_group.location
   resource_group_name   = azurerm_resource_group.azure_resource_group.name
   network_interface_ids = [azurerm_network_interface.cloudshell_nic[count.index].id]
-  size                  = "Standard_M16ms"
-  #size = "Standard_D4s_v3"
+  #size                  = "Standard_NC4as_T4_v3"
+  size = "Standard_NC24s_v3"
+  #size                  = "Standard_M16ms"
+  #size                  = "Standard_D4s_v3"
   identity {
     type = "SystemAssigned"
   }
@@ -244,7 +259,8 @@ resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_home" {
   managed_disk_id    = azurerm_managed_disk.cloudshell_home[count.index].id
   virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
   lun                = 0
-  caching            = "ReadOnly"
+  caching            = "ReadWrite"
+  create_option      = "Attach"
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_authd" {
@@ -252,16 +268,26 @@ resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_authd" {
   managed_disk_id    = azurerm_managed_disk.cloudshell_authd[count.index].id
   virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
   lun                = 1
-  caching            = "ReadOnly"
+  caching            = "ReadWrite"
   create_option      = "Attach"
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_docker" {
-  count                     = var.CLOUDSHELL ? 1 : 0
-  managed_disk_id           = azurerm_managed_disk.cloudshell_docker[count.index].id
-  virtual_machine_id        = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
-  lun                       = 2
-  caching                   = "None"
-  write_accelerator_enabled = true
-  create_option             = "Attach"
+  count              = var.CLOUDSHELL ? 1 : 0
+  managed_disk_id    = azurerm_managed_disk.cloudshell_docker[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
+  lun                = 2
+  create_option      = "Attach"
+  caching            = "ReadWrite"
+  #write_accelerator_enabled = true
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "cloudshell_ollama" {
+  count              = var.CLOUDSHELL ? 1 : 0
+  managed_disk_id    = azurerm_managed_disk.cloudshell_ollama[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.cloudshell_vm[count.index].id
+  lun                = 3
+  caching            = "ReadOnly"
+  create_option      = "Attach"
+  #write_accelerator_enabled = true
 }
